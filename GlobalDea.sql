@@ -26,7 +26,14 @@ FROM GlobalDeaths..['Medical Doctors$']
 COUNTRIES, POPULATION, SELECTED CAUSES OF DEATH BY POPULATION 
 Shows the likelihood of deaths caused by selected organ failures as well as the chances of seeing a doctor given by Doctors per 10,000 (the higher, the better)
 By expressing deaths as a percentage of population, we arrive at values which do not penalize countries with large populations; 
-this would have been the case if reported figures were used.
+this would have been the case if reported figures were used. For example;
+
+	In 2019, Bangladesh and Georgia had populations of 165M and 3.7M respectively. Deaths due to Cardiovascular diseases for Bangladesh were 325K and for Georgia,30K.
+	A simple conclusion using the reported figures directly would be that Bangladesh has a more severe heart disease problem than Georgia.
+	When these numbers are expressed as a % of local population however, we arrive at 0.196% for the former and 0.788% for the latter. This leads to different conclusions.
+	It shows an individual is four times more likely to pass due to heart disease in Georgia compared to Bangladesh.
+	As addressed earlier, using absolute values "punishes" countries with large populations while "rewarding" their less populous counterparts.
+	
 Using only 1990, 2000, 2010 and 2019 to show intracountry differences over time
 */
 
@@ -90,10 +97,3 @@ JOIN GlobalDeaths..['5# World Population$'] pop
 	AND dea.Year = pop.Year
 WHERE cont.Continent_Name IS NOT NULL
 
-
-/*
-CLOSING REMARKS
-
-
-
-*/
