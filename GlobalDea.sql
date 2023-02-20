@@ -22,10 +22,13 @@ FROM GlobalDeaths..['5# World Population$']
 SELECT *
 FROM GlobalDeaths..['Medical Doctors$']
 
-
--- Countries, Causes of deaths, Population
--- Shows the likelihood of deaths caused by selected organ failures as well as the chances of seeing a doctor given by Doctors per 10,000 (the higher, the better)
--- Using 1990, 2000, 2010 and 2019 to show intracountry differences over time
+/*
+COUNTRIES, POPULATION, SELECTED CAUSES OF DEATH BY POPULATION 
+Shows the likelihood of deaths caused by selected organ failures as well as the chances of seeing a doctor given by Doctors per 10,000 (the higher, the better)
+By expressing deaths as a percentage of population, we arrive at values which do not penalize countries with large populations; 
+this would have been the case if reported figures were used.
+Using only 1990, 2000, 2010 and 2019 to show intracountry differences over time
+*/
 
 SELECT dea.Entity,cont.Continent_Name,pop.[Population (historical estimates)],dea. Year, med.Indicator, med.FactValueNumeric, 
 		ROUND((med.FactValueNumeric/pop.[Population (historical estimates)])*10000,2) AS Doctors_per_10000,
@@ -86,3 +89,11 @@ JOIN GlobalDeaths..['5# World Population$'] pop
 	ON dea.Code = pop.Code
 	AND dea.Year = pop.Year
 WHERE cont.Continent_Name IS NOT NULL
+
+
+/*
+CLOSING REMARKS
+
+
+
+*/
