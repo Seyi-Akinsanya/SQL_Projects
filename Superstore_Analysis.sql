@@ -26,17 +26,16 @@ WHERE [Order Date] IS NULL
 -- Finding duplicate values
 
 WITH UniqueRows AS (
-	SELECT CONCAT([Order ID],[Customer ID],[Product ID],[Sub-Category],[Segment],[Sales],[Quantity]) AS UniqueID,
-		   [Row ID]
+	SELECT CONCAT([Order ID],[Customer ID],[Product ID],[Sub-Category],[Segment],[Sales],[Quantity]) AS UniqueID, [Row ID]
     FROM PortfolioProject..D_Orders$
 	)
-
+	
 SELECT *
 FROM (
-	  SELECT [UniqueID],
-			 [Row ID],
-			 ROW_NUMBER() OVER (PARTITION BY UniqueID ORDER BY (SELECT NULL)) AS RowRank
-	   FROM UniqueRows
+	SELECT [UniqueID],
+	       [Row ID],
+	       ROW_NUMBER() OVER (PARTITION BY UniqueID ORDER BY (SELECT NULL)) AS RowRank
+	FROM UniqueRows
 	   ) AS DuplicateCheck
 WHERE RowRank > 1;
 
