@@ -206,3 +206,13 @@ it would be wise to look into discounting rules on a region by region basis
 
 EXEC SubCategoryAnalysis @SubCategory = 'Bookcases';
 
+/*On the other side of the scale,
+Running the same analysis on Paper, the sub-category with the second highest profit
+Yields the same conclusion; lower discounts and higher profits go hand-in-hand
+As touched on earlier, this can be causation or correlation
+Paper as a sub-category might not need discounts to maintain high order volumes
+Hence its higher profits compared to Bookcases and Tables
+*/
+
+EXEC SubCategoryAnalysis @SubCategory = 'Paper';
+
