@@ -1,99 +1,60 @@
-/* 
-Global Deaths and Causes Exploration
+-- Define table aliases for clarity and consistency
+-- Improved comments for better context and explanation
 
-Skills used: Joins, CTEs, Aggregate Functions, Windowed Functions, Converting Data Types
+-- Preview of main tables
+SELECT * FROM GlobalDeaths..AnnualDeaths; -- Renamed for readability
+SELECT * FROM GlobalDeaths..CountryContinents;
+SELECT * FROM GlobalDeaths..WorldPopulation;
+SELECT * FROM GlobalDeaths..MedicalDoctors;
 
-
-*/
-
--- A look at the main table to be used for analysis
-
--- Select Data Tables that we are going to be working with
-
-SELECT *
-FROM GlobalDeaths..['1# annual-number-of-deaths-by-c$']
-
-SELECT *
-FROM GlobalDeaths..['4# ISO 3166_country-and-contine$']
-
-SELECT *
-FROM GlobalDeaths..['5# World Population$']
-
-SELECT *
-FROM GlobalDeaths..['Medical Doctors$']
-
-/*
-COUNTRIES, POPULATION, SELECTED CAUSES OF DEATH BY POPULATION 
-Shows the likelihood of deaths caused by selected organ failures as well as the chances of seeing a doctor given by Doctors per 10,000 (the higher, the better)
-By expressing deaths as a percentage of population, we arrive at values which do not penalize countries with large populations; 
-this would have been the case if reported figures were used. For example;
-
-	In 2019, Bangladesh and Georgia had populations of 165M and 3.7M respectively. Deaths due to Cardiovascular diseases for Bangladesh were 325K and for Georgia,30K.
-	A simple conclusion using the reported figures directly would be that Bangladesh has a more severe heart disease problem than Georgia.
-	When these numbers are expressed as a % of local population however, we arrive at 0.196% for the former and 0.788% for the latter. This leads to different conclusions.
-	It shows an individual is four times more likely to pass due to heart disease in Georgia compared to Bangladesh.
-	As addressed earlier, using absolute values "punishes" countries with large populations while "rewarding" their less populous counterparts.
-	
-Using only 1990, 2000, 2010 and 2019 to show intracountry differences over time
-*/
-
-SELECT dea.Entity,cont.Continent_Name,pop.[Population (historical estimates)],dea. Year, med.Indicator, med.FactValueNumeric, 
-		ROUND((med.FactValueNumeric/pop.[Population (historical estimates)])*10000,2) AS Doctors_per_10000,
-		CAST(ROUND (((dea.[Acute hepatitis]+dea.[Cirrhosis and other chronic liver diseases])/pop.[Population (historical estimates)])*100,3) AS nvarchar(10)) + '%' AS Liver_Related_Deaths,
-		CAST(ROUND ((dea.[Cardiovascular diseases]/pop.[Population (historical estimates)])*100,3) AS nvarchar(10)) + '%' AS Heart_Related_Deaths,
-		CAST(ROUND (((dea.[Lower respiratory infections]+dea.[Chronic respiratory diseases])/pop.[Population (historical estimates)])*100,3) AS nvarchar(10)) + '%' AS Lung_Related_Deaths,
-		CAST(ROUND (((dea.[Digestive diseases]+dea.[Diarrheal diseases])/pop.[Population (historical estimates)])*100,3) AS nvarchar(10)) + '%' AS GIT_Related_Deaths,
-		CAST(ROUND ((dea.[Chronic kidney disease]/pop.[Population (historical estimates)])*100,3) AS nvarchar(10)) + '%' AS Kidney_Related_Deaths
-FROM GlobalDeaths..['1# annual-number-of-deaths-by-c$'] dea
-JOIN GlobalDeaths..['5# World Population$'] pop
-	ON dea.Code = pop.Code
-	AND dea.Year = pop.Year
-JOIN GlobalDeaths..['4# ISO 3166_country-and-contine$'] cont
-	ON dea.Code = cont.Three_Letter_Country_Code
-JOIN GlobalDeaths..['Medical Doctors$'] med
-	ON dea.Code = med.ThreeLocCode
-	AND dea.Year = med.Period
-WHERE dea.Year IN ('1990', '2000', '2010', '2019')
-	AND med.Indicator != 'Medical doctors (per 10,000)'
-ORDER BY 1,4
-
--- Top 20 countries by the likelihood of seeing a specialist doctors and thier respective death metrics
--- Shows the presence (or absence) of a meaningful relationship between doctor population and deaths due to special organ failure
-
-WITH Top_Countries (Country, Continent, Population, Year, Doctor_ID, Doctor_Population, Doctors_per_10000, Liver_Related_Deaths, Heart_Related_Deaths, Lung_Related_Deaths, GIT_Related_Deaths, Kidney_Related_Deaths)
-AS
-(
-SELECT dea.Entity,cont.Continent_Name,pop.[Population (historical estimates)],dea. Year, med.Indicator, med.FactValueNumeric, 
-		ROUND((med.FactValueNumeric/pop.[Population (historical estimates)])*10000,2) AS Doctors_per_10000,
-		CAST(ROUND (((dea.[Acute hepatitis]+dea.[Cirrhosis and other chronic liver diseases])/pop.[Population (historical estimates)])*100,3) AS nvarchar(10)) + '%' AS Liver_Related_Deaths,
-		CAST(ROUND ((dea.[Cardiovascular diseases]/pop.[Population (historical estimates)])*100,3) AS nvarchar(10)) + '%' AS Heart_Related_Deaths,
-		CAST(ROUND (((dea.[Lower respiratory infections]+dea.[Chronic respiratory diseases])/pop.[Population (historical estimates)])*100,3) AS nvarchar(10)) + '%' AS Lung_Related_Deaths,
-		CAST(ROUND (((dea.[Digestive diseases]+dea.[Diarrheal diseases])/pop.[Population (historical estimates)])*100,3) AS nvarchar(10)) + '%' AS GIT_Related_Deaths,
-		CAST(ROUND ((dea.[Chronic kidney disease]/pop.[Population (historical estimates)])*100,3) AS nvarchar(10)) + '%' AS Kidney_Related_Deaths
-FROM GlobalDeaths..['1# annual-number-of-deaths-by-c$'] dea
-JOIN GlobalDeaths..['5# World Population$'] pop
-	ON dea.Code = pop.Code
-	AND dea.Year = pop.Year
-JOIN GlobalDeaths..['4# ISO 3166_country-and-contine$'] cont
-	ON dea.Code = cont.Three_Letter_Country_Code
-JOIN GlobalDeaths..['Medical Doctors$'] med
-	ON dea.Code = med.ThreeLocCode
-	AND dea.Year = med.Period
-WHERE dea.Year IN ('1990', '2000', '2010', '2019')
-	AND med.Indicator = 'Specialist medical practitioners (number)'
+-- Calculate key death metrics and doctor population per 10,000 people
+WITH DeathMetrics AS (
+    SELECT 
+        dea.Entity AS Country,
+        cont.Continent_Name AS Continent,
+        pop.[Population (historical estimates)] AS Population,
+        dea.Year,
+        med.Indicator AS Doctor_Type,
+        med.FactValueNumeric AS Doctor_Count,
+        ROUND((med.FactValueNumeric / pop.[Population (historical estimates)]) * 10000, 2) AS Doctors_per_10000,
+        ROUND(((dea.[Acute hepatitis] + dea.[Cirrhosis and other chronic liver diseases]) / pop.[Population (historical estimates)]) * 100, 3) AS Liver_Related_Deaths_Pct,
+        ROUND((dea.[Cardiovascular diseases] / pop.[Population (historical estimates)]) * 100, 3) AS Heart_Related_Deaths_Pct,
+        ROUND(((dea.[Lower respiratory infections] + dea.[Chronic respiratory diseases]) / pop.[Population (historical estimates)]) * 100, 3) AS Lung_Related_Deaths_Pct,
+        ROUND(((dea.[Digestive diseases] + dea.[Diarrheal diseases]) / pop.[Population (historical estimates)]) * 100, 3) AS GIT_Related_Deaths_Pct,
+        ROUND((dea.[Chronic kidney disease] / pop.[Population (historical estimates)]) * 100, 3) AS Kidney_Related_Deaths_Pct
+    FROM GlobalDeaths..AnnualDeaths dea
+    JOIN GlobalDeaths..WorldPopulation pop ON dea.Code = pop.Code AND dea.Year = pop.Year
+    JOIN GlobalDeaths..CountryContinents cont ON dea.Code = cont.Three_Letter_Country_Code
+    JOIN GlobalDeaths..MedicalDoctors med ON dea.Code = med.ThreeLocCode AND dea.Year = med.Period
+    WHERE dea.Year IN ('1990', '2000', '2010', '2019')
 )
-SELECT TOP 20 *
-FROM Top_Countries
-ORDER BY 7 DESC,1
+-- Select top countries by likelihood of seeing a specialist doctor
+SELECT TOP 20 
+    Country,
+    Continent,
+    Population,
+    Year,
+    Doctor_Type,
+    Doctor_Count,
+    Doctors_per_10000,
+    CONCAT(Liver_Related_Deaths_Pct, '%') AS Liver_Related_Deaths,
+    CONCAT(Heart_Related_Deaths_Pct, '%') AS Heart_Related_Deaths,
+    CONCAT(Lung_Related_Deaths_Pct, '%') AS Lung_Related_Deaths,
+    CONCAT(GIT_Related_Deaths_Pct, '%') AS GIT_Related_Deaths,
+    CONCAT(Kidney_Related_Deaths_Pct, '%') AS Kidney_Related_Deaths
+FROM DeathMetrics
+WHERE Doctor_Type = 'Specialist medical practitioners (number)'
+ORDER BY Doctors_per_10000 DESC, Country;
 
--- Total deaths due to heart diseases by population using Partition
-
-SELECT  dea.Entity, cont.Continent_Name, dea.Year, pop.[Population (historical estimates)], dea.[Cardiovascular diseases],SUM(dea.[Cardiovascular diseases]) OVER (Partition by dea.Entity ORDER BY dea.Entity, dea.Year) AS Rolling_Heart_Related_Deaths
-FROM GlobalDeaths..['1# annual-number-of-deaths-by-c$'] dea
-JOIN GlobalDeaths..['4# ISO 3166_country-and-contine$'] cont
-	ON dea.Code = cont.Three_Letter_Country_Code
-JOIN GlobalDeaths..['5# World Population$'] pop
-	ON dea.Code = pop.Code
-	AND dea.Year = pop.Year
-WHERE cont.Continent_Name IS NOT NULL
-
+-- Calculate rolling total for heart disease deaths by population
+SELECT 
+    dea.Entity AS Country,
+    cont.Continent_Name AS Continent,
+    dea.Year,
+    pop.[Population (historical estimates)] AS Population,
+    dea.[Cardiovascular diseases] AS Heart_Disease_Deaths,
+    SUM(dea.[Cardiovascular diseases]) OVER (PARTITION BY dea.Entity ORDER BY dea.Year) AS Rolling_Heart_Disease_Deaths
+FROM GlobalDeaths..AnnualDeaths dea
+JOIN GlobalDeaths..CountryContinents cont ON dea.Code = cont.Three_Letter_Country_Code
+JOIN GlobalDeaths..WorldPopulation pop ON dea.Code = pop.Code AND dea.Year = pop.Year
+WHERE cont.Continent_Name IS NOT NULL;
