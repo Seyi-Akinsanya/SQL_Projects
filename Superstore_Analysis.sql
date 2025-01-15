@@ -42,7 +42,7 @@ WHERE RowRank > 1;
 /*
 Identifying the number of members in important field. 
 State was added to determine the size of store's distribution network (& market);
-Sample Superstore is likely a US-based retailer with nationwide shipping
+Sample Superstore is most likely a US-based retailer with nationwide shipping
 */
 
 SELECT  COUNT(DISTINCT Category) AS no_of_category, 
