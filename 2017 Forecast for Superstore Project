@@ -22,8 +22,8 @@ SELECT
     Week,
     Market,
     Region,
-    ROUND(ISNULL(Sales, 0) * 1.15, 2) AS Sales, -- 2017 Sales Forecast with 15% growth
-    ROUND(ISNULL(Sales, 0) * 1.15 * 0.10, 2) AS Profit, -- 10% profit margin on 2017 Sales Forecast
-    ROUND(ISNULL(Order_Count, 0) * 1.25, 0) AS Order_Count -- 25% growth for Order Count
+    ROUND(ISNULL(Sales, 0) * 1.05, 2) AS Sales, -- 2017 Sales Forecast with 5% growth
+    ROUND(ISNULL(Sales, 0) * 1.05 * 0.10, 2) AS Profit, -- 10% profit margin on 2017 Sales Forecast
+    ROUND(ISNULL(Order_Count, 0) * 1.10, 0) AS Order_Count -- 10% growth for Order Count
 FROM 
     [dbo].[2016Actuals]
