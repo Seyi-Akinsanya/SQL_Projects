@@ -1,6 +1,6 @@
 USE PortfolioProjects
 
--- Step 1: Data Cleaning
+--- Data Cleaning
 
 -- Remove duplicate entries
 WITH DuplicateCTE AS (
@@ -40,7 +40,7 @@ UPDATE app_data SET price = 0 WHERE price IS NULL;
 UPDATE app_data SET country_code = UPPER(country_code);
 
 
--- Step 2: Apply Indexing for Optimization
+--- Apply Indexing for Optimization
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_app_id' AND object_id = OBJECT_ID('app_data'))
     CREATE INDEX idx_app_id ON app_data (id);
 
@@ -60,7 +60,7 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_rating_purchases' AND
     CREATE INDEX idx_rating_purchases ON app_data (has_in_app_purchases, user_rating_value);
 
 
--- Step 3: Query Insights
+--- Query Insights
 
 -- 1. Do Apps with In-App Purchases Receive Higher Ratings?
 WITH InAppData AS (
